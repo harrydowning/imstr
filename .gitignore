@@ -1,10 +1,9 @@
-# Python
 __pycache__/
 venv/
 
-# Test images
-data/
+*.egg-info
+dist/
 
-# Test output
+data/
 *.txt
 !requirements.txt
