@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import cv2 as cv
 from docopt import docopt
@@ -23,6 +24,10 @@ Options:
   -i --invert             Invert density string [default: {_invert}]. 
 """
 
+_scale_err_msg = 'Scale must be a non-negative, non-zero float'
+_width_err_msg = 'Width must be a positive integer'
+_height_err_msg = 'Height must be a positive integer'
+
 def _density_mapping(density: str, normalised_intensity: float) -> str:
     index = int(np.round(normalised_intensity * (len(density) - 1)))
     return density[index]
@@ -41,30 +46,30 @@ def _get_imstr(imstr_array: np.ndarray) -> str:
         imstr += '\n'
     return imstr
 
-def _write_imstr(imstr: str, filename: str, encoding: str):
-    match filename:
-        case None:
-            print(imstr)
-        case _:
-            with open(filename, 'w', encoding=encoding) as file:
-                file.write(imstr)
+def _write_imstr(imstr: str, filename: str | None, encoding: str | None):
+    if filename == None:
+        print(imstr, end='')
+    else:
+        with open(filename, 'w', encoding=encoding) as file:
+                    file.write(imstr)
 
-def _resize_image(image: np.ndarray, width: int, height: int) -> np.ndarray:
+def _resize_image(image: np.ndarray, width: int | None, 
+                  height: int | None) -> np.ndarray:
     if width == None and height == None:
         return image
     
     im_height, im_width = image.shape
 
     if width == None:
-        height = int(height)
         scale = height / im_height
-        shape = (int(scale * im_width), height)
+        new_width = max(int(scale * im_width), 1)
+        shape = (new_width, height)
         return cv.resize(image, shape, interpolation=cv.INTER_AREA)
     
     if height == None:
-        width = int(width)
-        scale= width / im_width
-        shape = (width, int(scale * im_height))
+        scale = width / im_width
+        new_height = max(int(scale * im_height), 1)
+        shape = (width, new_height)
         return cv.resize(image, shape, interpolation=cv.INTER_AREA)
 
 def _scale_image(image: np.ndarray, scale: float) -> np.ndarray:
@@ -72,30 +77,68 @@ def _scale_image(image: np.ndarray, scale: float) -> np.ndarray:
     height = int(image.shape[0] * scale)
     return cv.resize(image, (width, height), interpolation=cv.INTER_AREA)
 
-def imstr(image: str, /, filename: str = None, encoding: str = None, 
-          scale: float = _scale, width: int = None, height: int = None,
+def _handle_value_error(value, value_fn, predicate, err_msg, default = None):
+    try:
+        value = value_fn(value)
+        if predicate(value):
+            raise ValueError(err_msg)
+    except ValueError:
+        if __name__ == '__main__':
+            print(err_msg, file=sys.stderr)
+            exit(1)
+        else:
+            raise # Propogate the value error
+    except TypeError:
+        return default
+    return value
+
+def imstr(image: str, filename: str | None = None, 
+          encoding: str | None = None, scale: float = _scale, 
+          width: int | None = None, height: int | None = None,
           density: str = _density, invert: bool = _invert):
     """
+    Convert an image to a string representation.
+
+    :param image: Filename for input image.
+    :param filename: Filename used to write output to a file.
+    :param encoding: Output target encoding.
+    :param scale: Scale the output. This will happen after any width or height
+    resizing.
+    :param width: Set the width of the output. The height will be scaled
+    accordingly if not explicitly set.
+    :param height: Set the height of the output. The width will be scaled
+    accordingly if not explicitly set.
+    :param density: The string of characters used to replace pixel values.
+    :param invert: Invert the density string.
+    
+    :returns: String representation of the input image.
+
+    :raises ValueError: Scale must be a non-negative, non-zero float.
+    :raises ValueError: Width must be a positive integer.
+    :raises ValueError: Height must be a positive integer.
     """
+    scale = _handle_value_error(scale, float, lambda x: x <= 0,
+                                _scale_err_msg, _scale)
+    width = _handle_value_error(width, int, lambda x: x < 1, _width_err_msg)
+    height = _handle_value_error(height, int, lambda x: x < 1, _height_err_msg)
 
     image = cv.imread(image, cv.IMREAD_GRAYSCALE)
     resized_image = _resize_image(image, width, height)
     scaled_image = _scale_image(resized_image, scale)
-
     density = density[::-1] if invert else density
 
     imstr_array = _get_imstr_array(scaled_image, density)
     imstr = _get_imstr(imstr_array)
     
-    _write_imstr(imstr, filename, encoding)
+    if __name__ == '__main__' or filename != None:
+        _write_imstr(imstr, filename, encoding)
+    
+    return imstr
 
 if __name__ == '__main__':
     args = docopt(_cli, version=f'imstr {_version}')
-    imstr(args['<image>'], 
-        filename=args['--output'],
-        encoding=args['--encoding'], 
-        scale=float(args['--scale']),
-        width=args['--width'],
-        height=args['--height'],
-        density=args['--density'],
-        invert=args['--invert'])
+
+    imstr(image=args['<image>'], filename=args['--output'],
+          encoding=args['--encoding'], scale=args['--scale'],
+          width=args['--width'], height=args['--height'],
+          density=args['--density'], invert=args['--invert'])
