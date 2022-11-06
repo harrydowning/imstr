@@ -48,7 +48,10 @@ def _get_imstr(imstr_array: np.ndarray) -> str:
 
 def _write_imstr(imstr: str, filename: str | None, encoding: str | None):
     if filename == None:
-        print(imstr, end='')
+        if encoding != None:
+            sys.stdout.buffer.write(imstr.encode(encoding))
+        else:
+            sys.stdout.write(imstr)
     else:
         with open(filename, 'w', encoding=encoding) as file:
                     file.write(imstr)
@@ -77,17 +80,22 @@ def _scale_image(image: np.ndarray, scale: float) -> np.ndarray:
     height = int(image.shape[0] * scale)
     return cv.resize(image, (width, height), interpolation=cv.INTER_AREA)
 
+def _resolve_error(error, err_msg):
+    if __name__ == '__main__':
+        print(err_msg, file=sys.stderr)
+        exit(1)
+    else:
+        if error == None:
+            raise # Propogate the error
+        raise error(err_msg)
+
 def _handle_value_error(value, value_fn, predicate, err_msg, default = None):
     try:
         value = value_fn(value)
         if predicate(value):
             raise ValueError(err_msg)
     except ValueError:
-        if __name__ == '__main__':
-            print(err_msg, file=sys.stderr)
-            exit(1)
-        else:
-            raise # Propogate the value error
+        _resolve_error(None, err_msg)
     except TypeError:
         return default
     return value
@@ -113,11 +121,11 @@ def imstr(image: str, filename: str | None = None,
     
     :returns: String representation of the input image.
 
-    :raises ValueError: Scale must be a non-negative, non-zero float.
-    :raises ValueError: Width must be a positive integer.
-    :raises ValueError: Height must be a positive integer.
-    :raises FileNotFoundError: Image must specify a valid path to a file that
-    exists
+    :raises ValueError: Scale must be a non-negative, non-zero float
+    :raises ValueError: Width must be a positive integer
+    :raises ValueError: Height must be a positive integer
+    :raises FileNotFoundError: Image must be a valid path to a file that exists
+    :raises LookupError: Encoding must be valid
     """
     scale = _handle_value_error(scale, float, lambda x: x <= 0,
                                 _scale_err_msg, _scale)
@@ -126,11 +134,7 @@ def imstr(image: str, filename: str | None = None,
 
     if not os.path.isfile(image):
         fnf_err_msg = f"The file '{image}' could not be found."
-        if __name__ == '__main__':
-            print(fnf_err_msg, file=sys.stderr)
-            exit(1)
-        else:
-            raise FileNotFoundError(fnf_err_msg)
+        _resolve_error(FileNotFoundError, fnf_err_msg)
 
     image_array = cv.imread(image, cv.IMREAD_GRAYSCALE)
     resized_image = _resize_image(image_array, width, height)
@@ -141,7 +145,10 @@ def imstr(image: str, filename: str | None = None,
     imstr = _get_imstr(imstr_array)
     
     if __name__ == '__main__' or filename != None:
-        _write_imstr(imstr, filename, encoding)
+        try:
+            _write_imstr(imstr, filename, encoding)
+        except LookupError:
+            _resolve_error(None, 'Could not find specified encoding.')
     
     return imstr
 
