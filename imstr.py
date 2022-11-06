@@ -1,4 +1,4 @@
-import sys
+import sys, os
 import numpy as np
 import cv2 as cv
 from docopt import docopt
@@ -116,14 +116,24 @@ def imstr(image: str, filename: str | None = None,
     :raises ValueError: Scale must be a non-negative, non-zero float.
     :raises ValueError: Width must be a positive integer.
     :raises ValueError: Height must be a positive integer.
+    :raises FileNotFoundError: Image must specify a valid path to a file that
+    exists
     """
     scale = _handle_value_error(scale, float, lambda x: x <= 0,
                                 _scale_err_msg, _scale)
     width = _handle_value_error(width, int, lambda x: x < 1, _width_err_msg)
     height = _handle_value_error(height, int, lambda x: x < 1, _height_err_msg)
 
-    image = cv.imread(image, cv.IMREAD_GRAYSCALE)
-    resized_image = _resize_image(image, width, height)
+    if not os.path.isfile(image):
+        fnf_err_msg = f"The file '{image}' could not be found."
+        if __name__ == '__main__':
+            print(fnf_err_msg, file=sys.stderr)
+            exit(1)
+        else:
+            raise FileNotFoundError(fnf_err_msg)
+
+    image_array = cv.imread(image, cv.IMREAD_GRAYSCALE)
+    resized_image = _resize_image(image_array, width, height)
     scaled_image = _scale_image(resized_image, scale)
     density = density[::-1] if invert else density
 
