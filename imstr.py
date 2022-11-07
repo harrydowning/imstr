@@ -152,10 +152,13 @@ def imstr(image: str, filename: str | None = None,
     
     return imstr
 
-if __name__ == '__main__':
+def main():
     args = docopt(_cli, version=f'imstr {_version}')
 
     imstr(image=args['<image>'], filename=args['--output'],
           encoding=args['--encoding'], scale=args['--scale'],
           width=args['--width'], height=args['--height'],
           density=args['--density'], invert=args['--invert'])
+
+if __name__ == '__main__':
+    main()
