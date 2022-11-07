@@ -1,51 +1,38 @@
 # imstr
-A command line tool for converting an image to a string representation.
+<a href="https://pypi.org/project/imstr/">
+  <img src="https://img.shields.io/pypi/v/imstr"/>
+</a>
+
+A command line tool for converting images to strings.
 
 ## Install
-
-### Python Module
-
-### Command Line Tool
+The following command will install `imstr`
+      
+    pip install imstr
 
 ## Usage
-Convert an image to a string representation.
+To use simple call `imstr` from the command line:
 
-param image  
-Filename for input image.
+    $ imstr --help
 
-param filename  
-Filename used to write output to a file.
+<div/>
+ 
+    $ python -m imstr --help
 
-param encoding  
-Output target encoding.
+Or import as a python module:
 
-param scale  
-Scale the output. This will happen after any width or height resizing.
+``` python
+from imstr import imstr
 
-param width  
-Set the width of the output. The height will be scaled accordingly if
-not explicitly set.
-
-param height  
-Set the height of the output. The width will be scaled accordingly if
-not explicitly set.
-
-param density  
-The string of characters used to replace pixel values.
-
-param invert  
-Invert the density string.
-
-returns  
-String representation of the input image.
-
-raises ValueError  
-Scale must be a non-negative, non-zero float.
-
-raises ValueError  
-Width must be a positive integer.
-
-raises ValueError  
-Height must be a positive integer.
+output = imstr(...)
+```
 
 ### Examples
+
+<div style="display: flex; justify-content: center; alight-items: center">
+<img style="height: 250px" src="https://user-images.githubusercontent.com/74541141/200204655-4de7b4b5-7434-4a89-934b-e92c989cee0c.png" />
+<img style="height: 250px" src="https://user-images.githubusercontent.com/74541141/200204656-731e4a81-a168-456f-bf2c-64ca34cec159.png" />
+<img style="height: 250px" src="https://user-images.githubusercontent.com/74541141/200204663-765e1f32-0400-4510-82e1-923b02fd4d1f.png" />
+</div>
+
+
