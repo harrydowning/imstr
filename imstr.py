@@ -28,6 +28,8 @@ _scale_err_msg = 'Scale must be a non-negative, non-zero float'
 _width_err_msg = 'Width must be a positive integer'
 _height_err_msg = 'Height must be a positive integer'
 
+_is_using_cli = False
+
 def _density_mapping(density: str, normalised_intensity: float) -> str:
     index = int(np.round(normalised_intensity * (len(density) - 1)))
     return density[index]
@@ -81,7 +83,7 @@ def _scale_image(image: np.ndarray, scale: float) -> np.ndarray:
     return cv.resize(image, (width, height), interpolation=cv.INTER_AREA)
 
 def _resolve_error(error, err_msg):
-    if __name__ == '__main__':
+    if _is_using_cli:
         print(err_msg, file=sys.stderr)
         exit(1)
     else:
@@ -144,7 +146,7 @@ def imstr(image: str, filename: str | None = None,
     imstr_array = _get_imstr_array(scaled_image, density)
     imstr = _get_imstr(imstr_array)
     
-    if __name__ == '__main__' or filename != None:
+    if _is_using_cli or filename != None:
         try:
             _write_imstr(imstr, filename, encoding)
         except LookupError:
@@ -153,8 +155,10 @@ def imstr(image: str, filename: str | None = None,
     return imstr
 
 def main():
-    args = docopt(_cli, version=f'imstr {_version}')
+    global _is_using_cli 
+    _is_using_cli = True
 
+    args = docopt(_cli, version=f'imstr {_version}')
     imstr(image=args['<image>'], filename=args['--output'],
           encoding=args['--encoding'], scale=args['--scale'],
           width=args['--width'], height=args['--height'],

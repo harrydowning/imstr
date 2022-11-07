@@ -7,24 +7,55 @@
 
 ## Install
 The following command will install `imstr`
-      
-    pip install imstr
+```
+pip install imstr
+```
 
 ## Usage
 To use, simply call from the command line:
+```
+$ imstr --help
 
-    $ imstr --help
+imstr
 
-or
- 
-    $ python -m imstr --help
+Usage:
+  imstr [options] <image>
 
-Or import as a python module:
+Options:
+  --help                  Show this screen.
+  -v --version            Show version.
+  -o --output=FILENAME    Output target.
+  -e --encoding=ENCODING  Output target encoding.
+  -s --scale=SCALE        Scale output [default: 1].
+  -w --width=WIDTH        Set width of output.
+  -h --height=HEIGHT      Set height of output.
+  -d --density=DENSITY    Set density string [default: .:-i|=+%O#@].
+  -i --invert             Invert density string [default: False].
+```
 
+Alternatively it can be called as a python module:
+```
+$ python -m imstr --help
+```
+Or imported as a python library:
 ``` python
 from imstr import imstr
 
 output = imstr(...)
+```
+
+### Example
+The following converts an input image (`cat.png`) to a string and saves it to a file (`cat.txt`).
+
+Command line
+```
+$ imstr cat.png -o cat.txt
+```
+Python
+``` python
+from imstr import imstr
+
+output = imstr('cat.png', filename='cat.txt')
 ```
 
 ### Example outputs
